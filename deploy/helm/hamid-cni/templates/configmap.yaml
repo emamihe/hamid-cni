@@ -12,9 +12,19 @@ data:
       "name": {{ .Values.cni.netName | quote }},
       "plugins": [
         {
+          "type": "loopback"
+        },
+        {
           "type": "hamid-cni",
           "socketPath": {{ .Values.cni.socketPath | quote }},
           "mtu": {{ .Values.cni.mtu }}
+        },
+        {
+          "type": "portmap",
+          "capabilities": {
+            "portMappings": true
+          },
+          "snat": true
         }
       ]
     }

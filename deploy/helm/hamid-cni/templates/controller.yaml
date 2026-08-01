@@ -20,6 +20,8 @@ spec:
         app.kubernetes.io/component: controller
     spec:
       serviceAccountName: {{ include "hamid-cni.serviceAccountName" . }}
+      tolerations:
+        {{- toYaml .Values.controller.tolerations | nindent 8 }}
       containers:
         - name: controller
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
