@@ -25,14 +25,17 @@ RUN apk add --no-cache curl ca-certificates \
     | tar -xz -C /plugins
 
 FROM alpine:3.21
-RUN apk add --no-cache iptables iproute2 ca-certificates \
+RUN apk add --no-cache iptables iproute2 ca-certificates curl \
  && mkdir -p /opt/cni/bin
 COPY --from=builder /out/hamid-cni /usr/local/bin/hamid-cni
 COPY --from=builder /out/hamid-agent /usr/local/bin/hamid-agent
 COPY --from=builder /out/hamid-controller /usr/local/bin/hamid-controller
-# Install commonly required plugins next to our CNI binary for the init container to copy.
+# Standard plugins required by containerd/CRI and our conflist chain.
 COPY --from=cni-plugins /plugins/loopback /opt/cni/bin/loopback
 COPY --from=cni-plugins /plugins/portmap /opt/cni/bin/portmap
 COPY --from=cni-plugins /plugins/bandwidth /opt/cni/bin/bandwidth
 COPY --from=cni-plugins /plugins/host-local /opt/cni/bin/host-local
+COPY hack/install-cni.sh /usr/local/bin/install-cni.sh
+RUN chmod 755 /usr/local/bin/install-cni.sh \
+ && chmod 755 /opt/cni/bin/*
 ENTRYPOINT ["/usr/local/bin/hamid-agent"]

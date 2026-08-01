@@ -31,22 +31,14 @@ spec:
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
-            - /bin/sh
-            - -c
-            - |
-              set -e
-              mkdir -p {{ .Values.cni.binDir }} {{ .Values.cni.confDir }}
-              cp -f /usr/local/bin/hamid-cni {{ .Values.cni.binDir }}/hamid-cni
-              # loopback (and friends) are required by containerd/CRI / conflist chaining
-              for bin in loopback portmap bandwidth host-local; do
-                if [ -f "/opt/cni/bin/${bin}" ]; then
-                  cp -f "/opt/cni/bin/${bin}" "{{ .Values.cni.binDir }}/${bin}"
-                  chmod 755 "{{ .Values.cni.binDir }}/${bin}"
-                fi
-              done
-              chmod 755 {{ .Values.cni.binDir }}/hamid-cni
-              # Prefer hamid-cni as the primary conflist; remove stale 10-* configs that conflict.
-              cp -f /cni/{{ .Values.cni.confName }} {{ .Values.cni.confDir }}/{{ .Values.cni.confName }}
+            - /usr/local/bin/install-cni.sh
+          env:
+            - name: CNI_BIN_DIR
+              value: {{ .Values.cni.binDir | quote }}
+            - name: CNI_CONF_DIR
+              value: {{ .Values.cni.confDir | quote }}
+            - name: CNI_CONF_NAME
+              value: {{ .Values.cni.confName | quote }}
           volumeMounts:
             - name: cni-bin
               mountPath: {{ .Values.cni.binDir }}

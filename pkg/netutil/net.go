@@ -165,14 +165,24 @@ func maskLen(n *net.IPNet) int {
 	return ones
 }
 
-// SetupVeth creates a veth pair, moves peer into netns, configures addressing.
+// SetupVeth creates a veth pair, moves peer into netns, then renames it to contName.
+// The peer must NOT be created as contName (usually "eth0") in the host netns — that
+// collides with the node's own eth0 and fails with "file exists".
 func SetupVeth(hostName, contName, netnsPath string, mtu int, mac net.HardwareAddr) (host netlink.Link, contMAC net.HardwareAddr, err error) {
+	// Clean up a leftover host veth from a previous failed ADD with the same container ID.
+	_ = DeleteLinkByName(hostName)
+
+	peerTemp, err := tempIfaceName("vp")
+	if err != nil {
+		return nil, nil, err
+	}
+
 	veth := &netlink.Veth{
 		LinkAttrs: netlink.LinkAttrs{
 			Name: hostName,
 			MTU:  mtu,
 		},
-		PeerName: contName,
+		PeerName: peerTemp,
 	}
 	if mac != nil {
 		veth.PeerHardwareAddr = mac
@@ -185,7 +195,7 @@ func SetupVeth(hostName, contName, netnsPath string, mtu int, mac net.HardwareAd
 	if err != nil {
 		return nil, nil, err
 	}
-	peerLink, err := netlink.LinkByName(contName)
+	peerLink, err := netlink.LinkByName(peerTemp)
 	if err != nil {
 		_ = netlink.LinkDel(hostLink)
 		return nil, nil, err
@@ -204,7 +214,36 @@ func SetupVeth(hostName, contName, netnsPath string, mtu int, mac net.HardwareAd
 		return nil, nil, fmt.Errorf("move peer to netns: %w", err)
 	}
 
+	if err := WithNetNS(netnsPath, func() error {
+		link, err := netlink.LinkByName(peerTemp)
+		if err != nil {
+			return fmt.Errorf("lookup peer in netns: %w", err)
+		}
+		if link.Attrs().Name != contName {
+			if err := netlink.LinkSetName(link, contName); err != nil {
+				return fmt.Errorf("rename peer to %s: %w", contName, err)
+			}
+		}
+		return nil
+	}); err != nil {
+		_ = netlink.LinkDel(hostLink)
+		return nil, nil, err
+	}
+
 	return hostLink, contMAC, nil
+}
+
+// tempIfaceName returns a short unique interface name with the given prefix.
+func tempIfaceName(prefix string) (string, error) {
+	entropy := make([]byte, 4)
+	if _, err := rand.Read(entropy); err != nil {
+		return "", err
+	}
+	name := fmt.Sprintf("%s%x", prefix, entropy)
+	if len(name) > 15 {
+		name = name[:15]
+	}
+	return name, nil
 }
 
 // ConfigureContainerIface sets IP, MAC, routes inside the pod netns.
