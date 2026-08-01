@@ -2,8 +2,27 @@ apiVersion: v1
 entries:
   hamid-cni:
   - apiVersion: v2
+    appVersion: 0.1.2
+    created: "2026-08-01T20:53:13.891961299Z"
+    description: VPC-aware CNI for Kubernetes with overlapping CIDRs and per-VPC VXLAN
+      overlays
+    digest: a50c2b27f15f69b98febcabec094d5720b6bbcad01e01b2ff6e8f258a0a6a97d
+    home: https://github.com/hamid/hamid-cni
+    keywords:
+    - cni
+    - networking
+    - vpc
+    - vxlan
+    maintainers:
+    - name: hamid
+    name: hamid-cni
+    type: application
+    urls:
+    - https://emamihe.github.io/hamid-cni/hamid-cni-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v2
     appVersion: 0.1.1
-    created: "2026-08-01T20:22:53.983500384Z"
+    created: "2026-08-01T20:53:13.891532155Z"
     description: VPC-aware CNI for Kubernetes with overlapping CIDRs and per-VPC VXLAN
       overlays
     digest: 5938c6a86ff89b8a2c5bb5ecb44a3ed2dfe09cda9e430dc7494013823b361823
@@ -20,4 +39,4 @@ entries:
     urls:
     - https://emamihe.github.io/hamid-cni/hamid-cni-0.1.1.tgz
     version: 0.1.1
-generated: "2026-08-01T20:22:53.982857443Z"
+generated: "2026-08-01T20:53:13.890801427Z"
