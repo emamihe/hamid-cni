@@ -26,16 +26,15 @@ RUN apk add --no-cache curl ca-certificates \
 
 FROM alpine:3.21
 RUN apk add --no-cache iptables iproute2 ca-certificates curl \
- && mkdir -p /opt/cni/bin
+ && mkdir -p /usr/lib/hamid-cni/cni
 COPY --from=builder /out/hamid-cni /usr/local/bin/hamid-cni
 COPY --from=builder /out/hamid-agent /usr/local/bin/hamid-agent
 COPY --from=builder /out/hamid-controller /usr/local/bin/hamid-controller
-# Standard plugins required by containerd/CRI and our conflist chain.
-COPY --from=cni-plugins /plugins/loopback /opt/cni/bin/loopback
-COPY --from=cni-plugins /plugins/portmap /opt/cni/bin/portmap
-COPY --from=cni-plugins /plugins/bandwidth /opt/cni/bin/bandwidth
-COPY --from=cni-plugins /plugins/host-local /opt/cni/bin/host-local
+# Keep bundled plugins OUT of /opt/cni/bin — that path is hostPath-mounted and would hide them.
+COPY --from=cni-plugins /plugins/loopback /usr/lib/hamid-cni/cni/loopback
+COPY --from=cni-plugins /plugins/portmap /usr/lib/hamid-cni/cni/portmap
+COPY --from=cni-plugins /plugins/bandwidth /usr/lib/hamid-cni/cni/bandwidth
+COPY --from=cni-plugins /plugins/host-local /usr/lib/hamid-cni/cni/host-local
 COPY hack/install-cni.sh /usr/local/bin/install-cni.sh
-RUN chmod 755 /usr/local/bin/install-cni.sh \
- && chmod 755 /opt/cni/bin/*
+RUN chmod 755 /usr/local/bin/install-cni.sh /usr/lib/hamid-cni/cni/*
 ENTRYPOINT ["/usr/local/bin/hamid-agent"]

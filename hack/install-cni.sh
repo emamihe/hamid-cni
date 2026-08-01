@@ -6,6 +6,8 @@ BIN_DIR="${CNI_BIN_DIR:-/opt/cni/bin}"
 CONF_DIR="${CNI_CONF_DIR:-/etc/cni/net.d}"
 CONF_NAME="${CNI_CONF_NAME:-10-hamid-cni.conflist}"
 CNI_PLUGINS_VERSION="${CNI_PLUGINS_VERSION:-v1.6.2}"
+# Bundled plugins live here in the image (NOT /opt/cni/bin — that is hostPath-mounted).
+BUNDLED_DIR="${CNI_BUNDLED_DIR:-/usr/lib/hamid-cni/cni}"
 
 mkdir -p "${BIN_DIR}" "${CONF_DIR}"
 
@@ -13,26 +15,25 @@ echo "installing hamid-cni into ${BIN_DIR}"
 cp -f /usr/local/bin/hamid-cni "${BIN_DIR}/hamid-cni"
 chmod 755 "${BIN_DIR}/hamid-cni"
 
-need_plugins=0
-for bin in loopback portmap bandwidth host-local; do
-  if [ ! -x "${BIN_DIR}/${bin}" ]; then
-    need_plugins=1
-    break
-  fi
-done
-
 install_from_image() {
   for bin in loopback portmap bandwidth host-local; do
-    if [ -f "/opt/cni/bin/${bin}" ]; then
-      cp -f "/opt/cni/bin/${bin}" "${BIN_DIR}/${bin}"
-      chmod 755 "${BIN_DIR}/${bin}"
+    src="${BUNDLED_DIR}/${bin}"
+    dst="${BIN_DIR}/${bin}"
+    if [ -f "${src}" ]; then
+      # Avoid "same file" when paths resolve identically.
+      if [ "${src}" = "${dst}" ]; then
+        continue
+      fi
+      cp -f "${src}" "${dst}"
+      chmod 755 "${dst}"
+      echo "installed ${bin} from image bundle"
     fi
   done
 }
 
 install_from_image
 
-# Fallback: download official plugins if loopback is still missing (old image / empty host).
+# Fallback: download official plugins if loopback is still missing.
 if [ ! -x "${BIN_DIR}/loopback" ]; then
   arch="$(uname -m)"
   case "${arch}" in
@@ -60,6 +61,7 @@ fi
 if [ ! -x "${BIN_DIR}/loopback" ]; then
   echo "ERROR: ${BIN_DIR}/loopback is still missing" >&2
   ls -la "${BIN_DIR}" >&2 || true
+  ls -la "${BUNDLED_DIR}" >&2 || true
   exit 1
 fi
 
