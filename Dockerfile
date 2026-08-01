@@ -7,9 +7,10 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 ARG VERSION=dev
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w -X github.com/hamid/hamid-cni/pkg/version.Version=${VERSION}" -o /out/hamid-cni ./cmd/cni \
- && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w -X github.com/hamid/hamid-cni/pkg/version.Version=${VERSION}" -o /out/hamid-agent ./cmd/agent \
- && CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w -X github.com/hamid/hamid-cni/pkg/version.Version=${VERSION}" -o /out/hamid-controller ./cmd/controller
+ARG TARGETARCH
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -ldflags="-s -w -X github.com/hamid/hamid-cni/pkg/version.Version=${VERSION}" -o /out/hamid-cni ./cmd/cni \
+ && CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -ldflags="-s -w -X github.com/hamid/hamid-cni/pkg/version.Version=${VERSION}" -o /out/hamid-agent ./cmd/agent \
+ && CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -ldflags="-s -w -X github.com/hamid/hamid-cni/pkg/version.Version=${VERSION}" -o /out/hamid-controller ./cmd/controller
 
 FROM alpine:3.21
 RUN apk add --no-cache iptables iproute2 ca-certificates

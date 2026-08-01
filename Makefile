@@ -1,4 +1,4 @@
-IMAGE ?= ghcr.io/hamid/hamid-cni
+IMAGE ?= emamihe/hamid-cni
 VERSION ?= 0.1.0
 GOOS ?= linux
 GOARCH ?= amd64

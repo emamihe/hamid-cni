@@ -33,12 +33,25 @@ Per VPC on each node that hosts member pods:
 - Pod veth pairs enslaved to the bridge
 - Static bridge FDB + ARP neigh entries for remote pods
 
-## Quick start
+## Install from Helm repository (GitHub Pages)
+
+After a tagged release (and once GitHub Pages is enabled for the `gh-pages` branch):
+
+```bash
+# Replace OWNER/REPO with your GitHub coordinates, e.g. emamihe/hamid-cni
+helm repo add hamid-cni https://OWNER.github.io/REPO
+helm repo update
+helm install hamid-cni hamid-cni/hamid-cni --namespace kube-system
+```
+
+Image used by the chart: `emamihe/hamid-cni`.
+
+## Quick start (from source)
 
 ```bash
 # Build & load image (kind example)
 make docker-build
-kind load docker-image ghcr.io/hamid/hamid-cni:0.1.0
+kind load docker-image emamihe/hamid-cni:0.1.0
 
 # Install (creates a default VPC automatically)
 helm upgrade --install hamid-cni deploy/helm/hamid-cni \
@@ -51,6 +64,30 @@ kubectl apply -f examples/vpcs.yaml
 kubectl annotate namespace team-a network.hamid-cni.io/vpc=vpc-blue --overwrite
 kubectl annotate namespace team-b network.hamid-cni.io/vpc=vpc-red --overwrite
 ```
+
+## Releasing
+
+Push a semver tag to trigger CI (`.github/workflows/release.yml`):
+
+```bash
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+The workflow will:
+
+1. Build multi-arch (`linux/amd64`, `linux/arm64`) images and push to Docker Hub:
+   - `emamihe/hamid-cni:1.2.3`
+   - `emamihe/hamid-cni:v1.2.3`
+   - `emamihe/hamid-cni:latest`
+2. Package the Helm chart at version `1.2.3` and publish it to the `gh-pages` branch (Helm repo).
+
+### One-time repository setup
+
+1. **Docker Hub secrets** (Settings → Secrets and variables → Actions):
+   - `DOCKERHUB_USERNAME` — Docker Hub username (e.g. `emamihe`)
+   - `DOCKERHUB_TOKEN` — Docker Hub access token
+2. **GitHub Pages**: Settings → Pages → Source = Deploy from a branch → Branch `gh-pages` / `/ (root)`.
 
 ## VPC selection
 
