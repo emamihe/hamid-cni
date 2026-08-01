@@ -1,0 +1,14 @@
+{{- if .Values.exampleVPCs.enabled }}
+{{- range .Values.exampleVPCs.items }}
+---
+apiVersion: network.hamid-cni.io/v1alpha1
+kind: VPC
+metadata:
+  name: {{ .name }}
+  labels:
+    {{- include "hamid-cni.labels" $ | nindent 4 }}
+spec:
+  cidr: {{ .cidr | quote }}
+  vxlanID: {{ .vxlanID }}
+{{- end }}
+{{- end }}

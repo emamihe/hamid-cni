@@ -1,0 +1,67 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: ipallocations.network.hamid-cni.io
+  labels:
+    app.kubernetes.io/name: hamid-cni
+spec:
+  group: network.hamid-cni.io
+  scope: Cluster
+  names:
+    plural: ipallocations
+    singular: ipallocation
+    kind: IPAllocation
+    shortNames:
+      - ipalloc
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: VPC
+          type: string
+          jsonPath: .spec.vpc
+        - name: IP
+          type: string
+          jsonPath: .spec.ip
+        - name: Namespace
+          type: string
+          jsonPath: .spec.podNamespace
+        - name: Pod
+          type: string
+          jsonPath: .spec.podName
+        - name: Node
+          type: string
+          jsonPath: .spec.node
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [vpc, podNamespace, podName, node, ip]
+              properties:
+                vpc:
+                  type: string
+                podNamespace:
+                  type: string
+                podName:
+                  type: string
+                node:
+                  type: string
+                ip:
+                  type: string
+                mac:
+                  type: string
+                interfaceID:
+                  type: string
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string

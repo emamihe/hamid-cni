@@ -1,0 +1,15 @@
+{{- if .Values.defaultVPC.enabled }}
+apiVersion: network.hamid-cni.io/v1alpha1
+kind: VPC
+metadata:
+  name: {{ .Values.defaultVPC.name }}
+  labels:
+    {{- include "hamid-cni.labels" . | nindent 4 }}
+    network.hamid-cni.io/default: "true"
+spec:
+  cidr: {{ .Values.defaultVPC.cidr | quote }}
+  vxlanID: {{ .Values.defaultVPC.vxlanID }}
+  {{- if .Values.defaultVPC.gateway }}
+  gateway: {{ .Values.defaultVPC.gateway | quote }}
+  {{- end }}
+{{- end }}

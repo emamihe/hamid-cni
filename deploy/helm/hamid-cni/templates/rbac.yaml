@@ -1,0 +1,30 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "hamid-cni.fullname" . }}
+  labels:
+    {{- include "hamid-cni.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["network.hamid-cni.io"]
+    resources: ["vpcs", "vpcs/status", "ipallocations", "ipallocations/status"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["namespaces", "nodes", "pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "hamid-cni.fullname" . }}
+  labels:
+    {{- include "hamid-cni.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "hamid-cni.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "hamid-cni.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

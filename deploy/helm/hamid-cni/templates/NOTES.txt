@@ -1,0 +1,28 @@
+Thank you for installing hamid-cni!
+
+{{- if .Values.defaultVPC.enabled }}
+
+A default VPC "{{ .Values.defaultVPC.name }}" ({{ .Values.defaultVPC.cidr }}, vxlanID={{ .Values.defaultVPC.vxlanID }})
+was installed. Namespaces without the network.hamid-cni.io/vpc annotation use it automatically
+(including kube-system / CoreDNS).
+{{- end }}
+
+Optional: put a namespace into its own VPC (CIDRs may overlap across VPCs):
+
+  kubectl apply -f - <<EOF
+  apiVersion: network.hamid-cni.io/v1alpha1
+  kind: VPC
+  metadata:
+    name: vpc-blue
+  spec:
+    cidr: 10.0.0.0/16
+    vxlanID: 100
+  EOF
+
+  kubectl annotate ns <namespace> network.hamid-cni.io/vpc=vpc-blue --overwrite
+
+Verify agents:
+
+  kubectl -n {{ .Release.Namespace }} get ds -l app.kubernetes.io/name=hamid-cni
+
+See examples/vpcs.yaml for an overlapping-CIDR demo.

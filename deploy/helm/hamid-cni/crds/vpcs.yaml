@@ -1,0 +1,83 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: vpcs.network.hamid-cni.io
+  labels:
+    app.kubernetes.io/name: hamid-cni
+spec:
+  group: network.hamid-cni.io
+  scope: Cluster
+  names:
+    plural: vpcs
+    singular: vpc
+    kind: VPC
+    shortNames:
+      - vpc
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: CIDR
+          type: string
+          jsonPath: .spec.cidr
+        - name: VXLAN
+          type: integer
+          jsonPath: .spec.vxlanID
+        - name: Allocated
+          type: integer
+          jsonPath: .status.allocated
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [cidr, vxlanID]
+              properties:
+                cidr:
+                  type: string
+                  description: IPv4 CIDR for this VPC. May overlap with other VPCs.
+                  pattern: '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'
+                vxlanID:
+                  type: integer
+                  minimum: 1
+                  maximum: 16777215
+                  description: Unique VXLAN VNI isolating this VPC overlay.
+                gateway:
+                  type: string
+                  description: Optional gateway IP inside the CIDR (defaults to first host address).
+                excludeIPs:
+                  type: array
+                  items:
+                    type: string
+                  description: IPs within the CIDR that must not be allocated.
+            status:
+              type: object
+              properties:
+                allocated:
+                  type: integer
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      observedGeneration:
+                        type: integer
+                        format: int64

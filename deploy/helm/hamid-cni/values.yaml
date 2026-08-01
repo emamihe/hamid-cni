@@ -1,0 +1,70 @@
+image:
+  repository: ghcr.io/hamid/hamid-cni
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+# Install as the primary cluster CNI.
+cni:
+  binDir: /opt/cni/bin
+  confDir: /etc/cni/net.d
+  confName: 10-hamid-cni.conflist
+  netName: hamid-cni
+  mtu: 1450
+  socketPath: /var/run/hamid-cni/hamid.sock
+
+# Fallback VPC for namespaces without network.hamid-cni.io/vpc.
+defaultVPC:
+  enabled: true
+  name: default
+  cidr: 10.244.0.0/16
+  vxlanID: 1
+  gateway: ""
+
+agent:
+  enabled: true
+  bridgePrefix: hv
+  vxlanPrefix: vx
+  # Leave empty to auto-detect from the default route.
+  underlayIface: ""
+  # Must match defaultVPC.name when defaultVPC.enabled is true.
+  defaultVPC: default
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  tolerations:
+    - operator: Exists
+      effect: NoSchedule
+
+controller:
+  enabled: true
+  replicas: 1
+  resources:
+    requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+serviceAccount:
+  create: true
+  name: hamid-cni
+
+rbac:
+  create: true
+
+# Example VPCs installed with the chart (optional).
+exampleVPCs:
+  enabled: false
+  items:
+    - name: vpc-blue
+      cidr: 10.0.0.0/16
+      vxlanID: 100
+    - name: vpc-red
+      # Overlaps with vpc-blue on purpose — isolated by VXLAN VNI.
+      cidr: 10.0.0.0/16
+      vxlanID: 200
